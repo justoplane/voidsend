@@ -1,1 +1,0 @@
-# Voidsend Design Document
