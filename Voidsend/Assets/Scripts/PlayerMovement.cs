@@ -1,12 +1,17 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
+    public Transform enemyPos;
+    private float enemyDistance;
+
     [Header("Movement Settings")]
     public float baseSpeed = 5f;
     public float momentumDecay = 5f; // How fast momentum fades
     public float maxMomentum = 10f;
+    public float slowCooldown = 2f; // Cooldown for slow motion activation
 
     [Header("Dash Settings")]
     public float dashForce = 20f;
@@ -16,18 +21,41 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 moveInput;
     private Vector2 momentum = Vector2.zero;
     private float lastDashTime;
+    private float lastSlowTime;
+
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        enemyDistance = Vector2.Distance(transform.position, enemyPos.position);
     }
 
     void Update()
     {
+        enemyDistance = Vector2.Distance(transform.position, enemyPos.position);
+
         HandleInput();
-        if (Input.GetKeyDown(KeyCode.Space) && Time.time - lastDashTime > dashCooldown)
+        if (Input.GetButtonDown("Dash") && Time.time - lastDashTime > dashCooldown)
         {
+            Debug.Log("Dash initiated");
             Dash();
+        }
+
+        if (Input.GetAxis("Slow") != 0f && Time.time - lastSlowTime > dashCooldown)
+        {
+            // Slow down the player
+            StartCoroutine(SlowMotionTimer(1f)); // Adjust duration as needed
+            Debug.Log("Slow motion activated");
+        }
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (enemyDistance <= 2.0f && enemyDistance >= 1.0f)
+        {
+            sr.color = Color.red; // Change to red        }   
+        }
+        else
+        {
+            sr.color = Color.blue;
         }
     }
 
@@ -59,7 +87,7 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = finalVelocity;
     }
 
-    void Dash()
+    public void Dash()
     {
         if (moveInput != Vector2.zero)
         {
@@ -69,15 +97,12 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Optional: call this from wall-jump, grapple, or kill-based reward system
-    public void AddMomentum(Vector2 direction, float force)
+    IEnumerator SlowMotionTimer(float duration)
     {
-        momentum += direction.normalized * force;
-    }
-
-    public void ResetMomentum()
-    {
-        momentum = Vector2.zero;
+        lastSlowTime = Time.time;
+        Time.timeScale = 0.5f; // Slow motion effect
+        yield return new WaitForSecondsRealtime(duration);
+        Time.timeScale = 1f; // Reset time scale
     }
 
     public Vector2 GetCurrentVelocity()

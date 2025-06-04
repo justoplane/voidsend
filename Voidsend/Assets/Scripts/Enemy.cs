@@ -13,4 +13,10 @@ public class Enemy : MonoBehaviour
     {
         
     }
+
+    public void TakeDamage() 
+    { 
+        Debug.Log("Enemy took damage!"); // Log damage taken
+        //this.gameObject.SetActive(false); // Deactivate the enemy GameObject
+    }
 }
